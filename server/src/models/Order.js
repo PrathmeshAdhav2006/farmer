@@ -10,6 +10,7 @@ const orderItemSchema = new mongoose.Schema({
     cropName: String,
     pricePerKg: Number,
     qualityGrade: String,
+    category: String,
     image: String,
   },
   farmer: {

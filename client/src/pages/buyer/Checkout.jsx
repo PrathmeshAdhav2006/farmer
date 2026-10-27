@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
 import api from '@/config/api'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getProductImageUrl } from '@/lib/utils'
 import Loading from '@/components/shared/Loading'
 import { toast } from 'sonner'
 
@@ -450,7 +450,8 @@ const Checkout = () => {
                   {cart.map((item) => (
                     <div key={item.product._id} className="flex gap-3">
                       <img
-                        src={item.product.images?.[0]?.url || '/placeholder.jpg'}
+                        src={getProductImageUrl(item.product.images?.[0]?.url, item.product.category)}
+                        onError={(e) => { e.currentTarget.src = getProductImageUrl('', item.product.category) }}
                         alt={item.product.cropName}
                         className="w-16 h-16 object-cover rounded"
                       />

@@ -28,7 +28,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import api from '@/config/api'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getProductImageUrl } from '@/lib/utils'
 import Loading from '@/components/shared/Loading'
 import { toast } from 'sonner'
 
@@ -366,7 +366,8 @@ const ProductCard = ({ product, onToggleAvailability, onDelete, onEdit, onCreate
       <Card className="overflow-hidden hover:shadow-lg transition-shadow">
         <div className="relative">
           <img
-            src={product.images?.[0]?.url || '/placeholder.jpg'}
+            src={getProductImageUrl(product.images?.[0]?.url, product.category)}
+            onError={(e) => { e.currentTarget.src = getProductImageUrl('', product.category) }}
             alt={product.cropName}
             className="w-full h-48 object-cover"
           />

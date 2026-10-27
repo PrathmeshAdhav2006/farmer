@@ -21,7 +21,6 @@ import CommunityDeals from '@/pages/public/CommunityDeals'
 import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
-import OAuthCallback from '@/pages/auth/OAuthCallback'
 
 // Buyer Pages
 import Cart from '@/pages/buyer/Cart'
@@ -43,7 +42,6 @@ import MarketPrices from '@/pages/farmer/MarketPrices'
 import FarmerProfile from '@/pages/farmer/Profile'
 import FarmerSettings from '@/pages/farmer/Settings'
 import FarmerAnalytics from '@/pages/farmer/Analytics'
-import PriceAdvisor from '@/pages/farmer/PriceAdvisor'
 import FarmerDeals from '@/pages/farmer/Deals'
 
 // Admin Pages
@@ -86,15 +84,12 @@ function App() {
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/community-deals" element={<CommunityDeals />} />
                 <Route path="/market-prices" element={<MarketPrices />} />
-                {/* <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} /> */}
               </Route>
 
               {/* Auth Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/auth/callback" element={<OAuthCallback />} />
 
               {/* Buyer Routes */}
               <Route element={<MainLayout />}>
@@ -181,12 +176,10 @@ function App() {
                 <Route path="orders" element={<FarmerOrdersPage />} />
                 <Route path="market-prices" element={<MarketPrices />} />
                 <Route path="analytics" element={<FarmerAnalytics />} />
-                <Route path="advisor" element={<PriceAdvisor />} />
                 <Route path="deals" element={<FarmerDeals />} />
                 <Route path="profile" element={<FarmerProfile />} />
                 <Route path="settings" element={<FarmerSettings />} />
               </Route>
-
 
               {/* Admin Routes */}
               <Route

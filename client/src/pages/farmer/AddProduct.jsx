@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -27,11 +27,6 @@ const AddProduct = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [isAnalyzingPrice, setIsAnalyzingPrice] = useState(false)
-  const [priceAnalysis, setPriceAnalysis] = useState(null)
-  const [isAnalyzingQuality, setIsAnalyzingQuality] = useState(false)
-  const [qualityAnalysis, setQualityAnalysis] = useState(null)
   const [imagePreview, setImagePreview] = useState([])
 
   const [formData, setFormData] = useState({
@@ -62,13 +57,13 @@ const AddProduct = () => {
   const [newCertification, setNewCertification] = useState('')
 
   const categories = [
-    { value: 'vegetables', label: 'Vegetables', icon: '🥬' },
-    { value: 'fruits', label: 'Fruits', icon: '🍎' },
-    { value: 'grains', label: 'Grains', icon: '🌾' },
-    { value: 'pulses', label: 'Pulses', icon: '🫘' },
-    { value: 'spices', label: 'Spices', icon: '🌶️' },
-    { value: 'dairy', label: 'Dairy', icon: '🥛' },
-    { value: 'other', label: 'Other', icon: '📦' },
+    { value: 'vegetables', label: 'Vegetables', icon: 'ðŸ¥¬' },
+    { value: 'fruits', label: 'Fruits', icon: 'ðŸŽ' },
+    { value: 'grains', label: 'Grains', icon: 'ðŸŒ¾' },
+    { value: 'pulses', label: 'Pulses', icon: 'ðŸ«˜' },
+    { value: 'spices', label: 'Spices', icon: 'ðŸŒ¶ï¸' },
+    { value: 'dairy', label: 'Dairy', icon: 'ðŸ¥›' },
+    { value: 'other', label: 'Other', icon: 'ðŸ“¦' },
   ]
 
   const districts = [
@@ -78,109 +73,6 @@ const AddProduct = () => {
   ]
 
   const units = ['kg', 'quintal', 'ton', 'piece', 'dozen', 'litre']
-
-  const generateAIDescription = () => {
-    if (!formData.cropName) {
-      toast.error('Please enter a Crop Name first so the AI knows what to describe!')
-      return
-    }
-    
-    setIsGenerating(true)
-    
-    // Simulate AI API call logic here (e.g., Gemini or OpenAI)
-    setTimeout(() => {
-      const isOrganicStr = formData.isOrganic ? '100% organic, ' : 'fresh, '
-      const categoryStr = formData.category ? formData.category : 'produce'
-      const cropNameCap = formData.cropName.charAt(0).toUpperCase() + formData.cropName.slice(1)
-      
-      const mockAiResponse = `Premium quality ${cropNameCap} sourced directly from our local farms. This ${isOrganicStr}farm-fresh ${categoryStr} is carefully cultivated and harvested to ensure the highest standards of taste and nutrition. Perfect for households and businesses looking for authentic, direct-from-farm produce. We guarantee quality and freshness in every order!`
-      
-      setFormData(prev => ({
-        ...prev,
-        description: mockAiResponse,
-        tags: [...new Set([...prev.tags, 'farm-fresh', 'premium-quality', formData.cropName.toLowerCase().replace(/\s+/g, '-')])]
-      }))
-      
-      setIsGenerating(false)
-      toast.success('✨ AI successfully generated a description and smart tags!')
-    }, 1500)
-  }
-
-  const analyzePrice = async () => {
-    if (!formData.cropName || !formData.pricePerKg) {
-      toast.error('Please enter Crop Name and Price per Kg to get an AI analysis!')
-      return
-    }
-    
-    setIsAnalyzingPrice(true)
-    setPriceAnalysis(null)
-    
-    try {
-      const mlApiUrl = import.meta.env.VITE_ML_API_URL || 'http://127.0.0.1:5001'
-      const response = await fetch(`${mlApiUrl}/predict`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          cropName: formData.cropName,
-          district: formData.district,
-          qualityGrade: formData.qualityGrade,
-          pricePerKg: formData.pricePerKg
-        }),
-      })
-      
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to analyze price')
-      }
-      
-      setPriceAnalysis({
-        status: data.status,
-        message: data.message
-      })
-    } catch (error) {
-      console.error('AI Analysis Error:', error)
-      toast.error('Could not connect to ML Server. Is the Python Flask app running on port 5001?')
-    } finally {
-      setIsAnalyzingPrice(false)
-    }
-  }
-
-  const analyzeCropQuality = async () => {
-    if (images.length === 0) {
-      toast.error('Please upload at least one image of your crop to analyze its quality!')
-      return
-    }
-
-    setIsAnalyzingQuality(true)
-    setQualityAnalysis(null)
-
-    try {
-      const formData = new FormData()
-      formData.append('image', images[0]) // Analyze the first image
-
-      const response = await api.post('/ai/analyze-crop', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-
-      const analysis = response.data.data.analysis
-      setQualityAnalysis(analysis)
-      
-      // Auto-update the quality grade based on AI assessment
-      if (analysis.grading) {
-        setFormData(prev => ({ ...prev, qualityGrade: analysis.grading }))
-      }
-      
-      toast.success('✨ Gemini Vision has certified your crop quality!')
-    } catch (error) {
-      console.error('AI Quality Analysis Error:', error)
-      toast.error(error.response?.data?.message || 'AI analysis failed. Please check your internet or API key.')
-    } finally {
-      setIsAnalyzingQuality(false)
-    }
-  }
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -385,20 +277,7 @@ const AddProduct = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium">
-                  Description
-                </label>
-                <Button 
-                  type="button" 
-                  onClick={generateAIDescription}
-                  disabled={isGenerating}
-                  className="h-7 px-3 text-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 shadow-sm transition-all"
-                >
-                  <Sparkles className={`w-3.5 h-3.5 mr-1.5 ${isGenerating ? 'animate-pulse' : ''}`} />
-                  {isGenerating ? 'AI is thinking...' : 'Auto-Fill with AI'}
-                </Button>
-              </div>
+              <label className="block text-sm font-medium mb-2">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -461,20 +340,7 @@ const AddProduct = () => {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium">
-                    Price per Kg (₹) *
-                  </label>
-                  <Button 
-                    type="button" 
-                    onClick={analyzePrice}
-                    disabled={isAnalyzingPrice}
-                    className="h-6 px-2 text-[10px] bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white border-0 shadow-sm transition-all rounded-full"
-                  >
-                    <Sparkles className={`w-3 h-3 mr-1 ${isAnalyzingPrice ? 'animate-pulse' : ''}`} />
-                    {isAnalyzingPrice ? 'Analyzing...' : 'AI Check'}
-                  </Button>
-                </div>
+                <label className="block text-sm font-medium mb-2">Price per Kg (₹) *</label>
                 <Input
                   type="number"
                   name="pricePerKg"
@@ -488,35 +354,7 @@ const AddProduct = () => {
               </div>
             </div>
 
-            {priceAnalysis && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`mt-4 p-4 rounded-lg border ${
-                  priceAnalysis.status === 'Excellent' ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-950/30 dark:border-green-900/50 dark:text-green-400' :
-                  priceAnalysis.status === 'Low' ? 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/30 dark:border-amber-900/50 dark:text-amber-400' :
-                  'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/30 dark:border-blue-900/50 dark:text-blue-400'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-0.5 p-1 rounded-full ${
-                    priceAnalysis.status === 'Excellent' ? 'bg-green-200 text-green-700 dark:bg-green-900 dark:text-green-300' :
-                    priceAnalysis.status === 'Low' ? 'bg-amber-200 text-amber-700 dark:bg-amber-900 dark:text-amber-300' :
-                    'bg-blue-200 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                  }`}>
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm flex items-center">
-                      AI Market Analysis: {priceAnalysis.status} Price
-                    </p>
-                    <p className="text-sm mt-1 leading-relaxed opacity-90">
-                      {priceAnalysis.message}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -647,66 +485,7 @@ const AddProduct = () => {
                 </label>
               </div>
 
-              {images.length > 0 && (
-                <div className="mt-4">
-                  <Button
-                    type="button"
-                    onClick={analyzeCropQuality}
-                    disabled={isAnalyzingQuality}
-                    className="w-full bg-gradient-to-r from-green-600 to-farmer-600 hover:from-green-700 hover:to-farmer-700 text-white border-0 shadow-md font-bold transition-all"
-                  >
-                    <Sparkles className={`w-4 h-4 mr-2 ${isAnalyzingQuality ? 'animate-spin' : ''}`} />
-                    {isAnalyzingQuality ? 'Gemini AI Is Inspecting Image...' : 'Run Gemini AI Quality Audit'}
-                  </Button>
-                </div>
-              )}
-
-              {qualityAnalysis && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="mt-4 p-5 rounded-2xl bg-gradient-to-br from-zinc-900 to-black text-white border border-zinc-800 shadow-2xl relative overflow-hidden group"
-                >
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <Sparkles className="w-20 h-20 text-farmer-500" />
-                  </div>
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="p-2 bg-farmer-500 rounded-lg">
-                          <CheckCircle className="w-4 h-4 text-white" />
-                        </div>
-                        <h4 className="font-bold text-sm tracking-tight uppercase">AI Vision Audit Report</h4>
-                      </div>
-                      <span className="text-[10px] font-black bg-white/10 px-2 py-0.5 rounded-full text-farmer-400">GEMINI 1.5 PRO</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="bg-white/5 p-3 rounded-xl border border-white/5">
-                        <p className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-1">Health Score</p>
-                        <p className="text-xl font-black text-green-400">{qualityAnalysis.health_assessment}</p>
-                      </div>
-                      <div className="bg-white/5 p-3 rounded-xl border border-white/5">
-                        <p className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-1">AI Grade</p>
-                        <p className="text-xl font-black text-farmer-500">GRADE {qualityAnalysis.grading}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-1">
-                       <p className="text-[10px] text-zinc-400 uppercase font-black tracking-widest">Market Insights</p>
-                       <p className="text-xs italic text-zinc-300 leading-relaxed font-medium">"{qualityAnalysis.quality_summary}"</p>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-                       <div className="flex gap-2">
-                          <span className="text-[9px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-md font-bold uppercase">Freshness: Verified</span>
-                          <span className="text-[9px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-bold uppercase">Traceability: High</span>
-                       </div>
-                       <p className="text-[9px] text-zinc-500 font-bold uppercase">Verified at {new Date().toLocaleTimeString()}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+              
 
               {imagePreview.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

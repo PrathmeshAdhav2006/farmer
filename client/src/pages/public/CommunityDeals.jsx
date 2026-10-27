@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import api from '@/config/api'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getProductImageUrl } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 
 const CommunityDeals = () => {
@@ -139,13 +139,12 @@ const CommunityDeals = () => {
                 >
                   <Card className="overflow-hidden border-0 shadow-xl shadow-black/5 bg-card hover:-translate-y-1 transition-all duration-300">
                     <div className="relative h-48">
-                      {deal.product?.images?.[0]?.url ? (
-                        <img src={deal.product.images[0].url} alt={deal.product.cropName} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <Package className="w-10 h-10 text-muted-foreground" />
-                        </div>
-                      )}
+                      <img
+                        src={getProductImageUrl(deal.product?.images?.[0]?.url, deal.product?.category)}
+                        onError={(e) => { e.currentTarget.src = getProductImageUrl('', deal.product?.category) }}
+                        alt={deal.product?.cropName}
+                        className="w-full h-full object-cover"
+                      />
                       
                       {/* Floating Badges */}
                       <div className="absolute top-4 left-4 flex flex-col gap-2">

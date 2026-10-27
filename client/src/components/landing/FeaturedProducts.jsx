@@ -78,7 +78,8 @@ const FeaturedProducts = () => {
                 onClick={() => navigate(`/products/${product._id}`)}>
                 <div className="relative overflow-hidden">
                   <img
-                    src={getProductImageUrl(product.images?.[0]?.url)}
+                    src={getProductImageUrl(product.images?.[0]?.url, product.category)}
+                    onError={(e) => { e.currentTarget.src = getProductImageUrl('', product.category) }}
                     alt={product.cropName}
                     className="w-full h-52 object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                   />

@@ -1,0 +1,951 @@
+================================================================================
+                    FARMER MARKETPLACE (KISAN BAZAAR)
+       COMPREHENSIVE TECHNICAL, FUNCTIONAL & ARCHITECTURAL DOCUMENTATION
+================================================================================
+Project Domain   : Agricultural E-Commerce & Direct-to-Consumer (D2C) AgriTech
+Target Region    : Maharashtra, India (Districts: Nashik, Pune, Ratnagiri, etc.)
+Academic Context : TY PDL (Project Design & Laboratory) Project
+Technology Stack : MERN Stack (MongoDB, Express.js, React 18, Node.js)
+Architecture     : 3-Tier Layered Architecture + WebSockets (Socket.io)
+Authentication   : Local Email/Password with bcrypt + Signed JWT Tokens (RBAC)
+Author / Maintainer: Project Development Team
+Last Updated     : October 2026
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+ 1. Executive Summary & Problem Statement
+ 2. System Architecture & High-Level Design
+ 3. User Roles & Access Control Matrix (RBAC)
+ 4. Functional Modules & Deep Dive Features
+    4.1. Authentication & Profile Management
+    4.2. Farmer Product & Inventory Management
+    4.3. Digital Product Passport & Supply Chain Traceability
+    4.4. APMC Mandi Market Prices (Analytics & Trends)
+    4.5. Community Group-Buy Deals (Social Commerce)
+    4.6. Shopping Cart & Multi-Item Checkout
+    4.7. Order Lifecycle, Logistics & Escrow Payments
+    4.8. Real-Time Chat & Messaging System
+    4.9. Real-Time Push & Email Notification Engine
+    4.10. Interactive Farm Map (Geo-Location)
+    4.11. Admin Administration & Moderation Console
+ 5. Complete Database Schema Specifications (MongoDB)
+ 6. Complete REST API Endpoint Directory
+ 7. WebSocket (Socket.io) Event Specifications
+ 8. Frontend Structure, Component Hierarchy & State Management
+ 9. Resilience, Image Fallbacks & Media Handling
+10. Environment Variables & Configuration Directory
+11. Step-by-Step Setup, Seeding & Execution Guide
+12. Demo Credentials & Test Scenarios
+13. Complete Project Directory Tree
+================================================================================
+
+
+================================================================================
+1. EXECUTIVE SUMMARY & PROBLEM STATEMENT
+================================================================================
+1.1 The Agricultural Crisis: Middlemen Exploitation & Information Asymmetry
+In traditional Indian agricultural supply chains (particularly in Maharashtra), 
+farmers face severe systemic challenges:
+  a) Intermediary Exploitation: Middlemen (arhatiyas, brokers, dalals) take 
+     upwards of 40% to 60% of consumer purchase prices, leaving farmers with 
+     slender margins that often fail to cover seed, fertilizer, and labor costs.
+  b) Price Opacity: Farmers lack real-time access to accurate Agricultural 
+     Produce Market Committee (APMC) mandi trading rates, forcing them to sell 
+     distress crops below true market worth.
+  c) Lack of Traceability: Consumers pay premium prices for produce labeled 
+     "organic" or "farm-fresh" without any verifiable proof of origin, harvest 
+     timelines, or chemical-free practices.
+  d) High Wholesale Barriers: Small households cannot access bulk wholesale 
+     discounts, and farmers cannot afford small-order shipping costs.
+  e) Delayed & Insecure Payments: Farmers frequently face payment defaults 
+     and delayed cash collections from commission agents.
+
+1.2 The Solution: Farmer Marketplace
+Farmer Marketplace is an open, direct-to-consumer (D2C) and business-to-business 
+(B2B) agricultural platform designed specifically for Maharashtra's agricultural 
+ecosystem. It connects farmers directly with retail consumers, cooperative 
+housing societies, restaurants, and bulk buyers.
+
+Key Highlights of the Platform:
+  - Disintermediation: 100% direct trade between farmers and buyers.
+  - Transparent Mandi Pricing: Integrated 90-day APMC market pricing benchmarks 
+    across 7 key Maharashtra agricultural districts.
+  - Community Group-Buy Deals: Social commerce enabling neighborhood buyers 
+    to pool orders together and unlock wholesale prices.
+  - Digital Product Passport: End-to-end crop traceability detailing farm 
+    taluka/village origin, harvest date, quality grade, and eco-metrics.
+  - Secure Financial Transactions: Razorpay payment gateway integration, Cash 
+    on Delivery (COD), and automated Escrow holding for large orders (> Rs. 5000).
+  - Real-Time Communication: Direct WebSocket chat between farmer and buyer.
+  - Robust Image Fallbacks: Zero broken images via an intelligent multi-tiered 
+    fallback engine (Unsplash produce CDN -> local uploads -> SVG fallback).
+  - Clean, Deterministic Engineering: No fragile external black-box models or 
+    third-party OAuth bottlenecks; reliable, self-contained architecture.
+
+
+================================================================================
+2. SYSTEM ARCHITECTURE & HIGH-LEVEL DESIGN
+================================================================================
+The application utilizes a classic 3-Tier Layered Architecture with event-driven 
+bidirectional WebSocket extensions for instant notifications and chat.
+
++--------------------------------------------------------------------------+
+|                          TIER 1: PRESENTATION LAYER                      |
+|                                                                          |
+|   React 18 Single Page Application (SPA) - Built with Vite 5             |
+|   - Styling: Tailwind CSS 3 (Dark Theme Palette)                         |
+|   - UI Components: shadcn/ui primitives (Radix UI) + Aceternity UI       |
+|   - Animations: Framer Motion                                            |
+|   - State Management: React Context (AuthContext, CartContext)           |
+|   - Data Fetching & Caching: TanStack React Query v5                     |
+|   - Mapping: React Leaflet + OpenStreetMap Tile Provider                 |
+|   - Real-time Client: Socket.io Client                                   |
++--------------------------------------------------------------------------+
+                                    |
+                        HTTP REST / WebSocket (JSON)
+                                    |
++--------------------------------------------------------------------------+
+|                          TIER 2: APPLICATION LAYER                       |
+|                                                                          |
+|   Node.js (v18+) + Express 4 (ES Modules)                                |
+|   - Security: Helmet headers, CORS policy, Mongo Sanitize, Rate Limiter  |
+|   - Authentication: JWT (JSON Web Tokens) in Bearer Headers & Cookies    |
+|   - Real-time Engine: Socket.io Server (Rooms, Private Chat, Alerts)     |
+|   - Controller & Service Layer: Business rules, escrow, order tracking   |
+|   - File Uploads: Multer multi-part storage + Cloudinary / Local Fallback|
+|   - Transactional Email: Nodemailer with responsive HTML templates       |
+|   - Payment Processor: Razorpay SDK (Order generation & HMAC verification|
++--------------------------------------------------------------------------+
+                                    |
+                           Mongoose ODM (Driver)
+                                    |
++--------------------------------------------------------------------------+
+|                            TIER 3: DATA LAYER                            |
+|                                                                          |
+|   MongoDB Database (Collections)                                         |
+|   - users         : User accounts, roles, KYC farm data, addresses       |
+|   - products      : Crop inventory, pricing, quality grades, images      |
+|   - orders        : Purchase records, snapshots, shipping, escrow status |
+|   - groupbuys     : Group-buying bulk deals, progress, participants      |
+|   - apmcprices    : Mandi rate archives (commodities, min/max/modal)     |
+|   - chatrooms     : Buyer-Farmer direct messaging threads                |
+|   - messages      : Individual chat message entries                      |
+|   - notifications : In-app alerts, read tracking                         |
+|   - reviews       : Star ratings and textual customer feedback           |
++--------------------------------------------------------------------------+
+
+
+================================================================================
+3. USER ROLES & ACCESS CONTROL MATRIX (RBAC)
+================================================================================
+The system enforces strict Role-Based Access Control via Express middleware 
+(`protect` and `authorize('farmer', 'buyer', 'admin')`) on the server, and 
+`<PrivateRoute allowedRoles={[...]}>` route gates on the client.
+
+FEATURE / PERMISSION            | PUBLIC | BUYER | FARMER | ADMIN
+--------------------------------+--------+-------+--------+-------
+View Landing Page & Info        |  YES   |  YES  |  YES   |  YES
+Browse Product Catalog & Search |  YES   |  YES  |  YES   |  YES
+View Crop Digital Passport      |  YES   |  YES  |  YES   |  YES
+View APMC Market Prices         |  YES   |  YES  |  YES   |  YES
+View Community Group-Buy Deals  |  YES   |  YES  |  YES   |  YES
+User Registration & Login       |  YES   |  YES  |  YES   |  YES
+Add Items to Cart               |   NO   |  YES  |   NO   |   NO
+Checkout & Place Orders         |   NO   |  YES  |   NO   |   NO
+Manage Personal Delivery Addrs  |   NO   |  YES  |   NO   |   NO
+Join Community Group-Buy Deal   |   NO   |  YES  |   NO   |   NO
+View Interactive Farm Map       |   NO   |  YES  |   NO   |   NO
+List New Farm Products          |   NO   |   NO  |  YES   |   NO
+Edit / Delete Own Products      |   NO   |   NO  |  YES   |   NO
+Manage Incoming Farm Orders     |   NO   |   NO  |  YES   |   NO
+Update Order Delivery Status    |   NO   |   NO  |  YES   |   NO
+Create Community Bulk Deals     |   NO   |   NO  |  YES   |   NO
+View Sales & Revenue Analytics  |   NO   |   NO  |  YES   |   NO
+Direct Chat (Buyer <-> Farmer)  |   NO   |  YES  |  YES   |   NO
+In-App Notification Alerts      |   NO   |  YES  |  YES   |  YES
+Admin Analytics Dashboard       |   NO   |   NO  |   NO   |  YES
+Verify / Suspend User Accounts  |   NO   |   NO  |   NO   |  YES
+Moderate / Approve Products     |   NO   |   NO  |   NO   |  YES
+Import APMC Mandi Data          |   NO   |   NO  |   NO   |  YES
+System-Wide Order Oversight     |   NO   |   NO  |   NO   |  YES
+
+
+================================================================================
+4. FUNCTIONAL MODULES & DEEP DIVE FEATURES
+================================================================================
+
+4.1. Authentication & Profile Management
+- Local Credentials Auth: User accounts are protected using industry-standard 
+  bcrypt salt hashing (10 rounds). Passwords are never stored in plain text.
+- JWT Session Management: Successful authentication returns a cryptographically 
+  signed JSON Web Token (HS256) valid for 7 days. Tokens are stored in browser 
+  localStorage and forwarded in the `Authorization: Bearer <token>` header.
+- Granular Role Registration:
+  * Farmers register with specific agricultural metadata: district, taluka, 
+    village, and farm size in acres.
+  * Buyers register with mobile number, default delivery addresses, and city.
+  * Admins possess platform oversight privileges.
+- Password Recovery: Token-based forgot/reset password email workflow powered 
+  by Nodemailer with single-use hashed recovery tokens.
+
+4.2. Farmer Product & Inventory Management
+- Rich Crop Cataloging: Farmers list produce specifying crop name, category 
+  (vegetables, fruits, grains, pulses, spices, dairy, other), quantity available, 
+  price per kg, quality grade (Grade A, Grade B, Grade C), harvest date, and 
+  projected shelf expiry date.
+- Organic Verification: Checkbox indicating certified organic produce with 
+  accompanying certification details.
+- Multi-Image File Uploads: Supports up to 5 images per product. Handled via 
+  Multer. Gracefully falls back to local storage in `server/uploads` if Cloudinary 
+  credentials are not configured.
+- Real-Time Inventory Control: When orders or group-buys are placed, stock 
+  levels deduct atomically to prevent overselling.
+
+4.3. Digital Product Passport & Supply Chain Traceability
+- Concept: An automated transparency badge attached to every crop listing.
+- Origin Verification: Displays the exact district, taluka, and village where 
+  the crop was harvested, linking directly to the farmer's profile.
+- Freshness Index: Calculates elapsed days since harvest date to inform buyers 
+  of real product freshness.
+- Eco-Sustainability Metrics: Auto-computes carbon footprint reduction from 
+  direct localized delivery compared to multi-tier middleman transport.
+- Quality Grading Audit: Indicates quality inspection benchmarks (Grade A 
+  export quality, Grade B standard market, Grade C processing grade).
+
+4.4. APMC Mandi Market Prices (Analytics & Trends)
+- Mandi Price Transparency: Direct integration with Agricultural Produce Market 
+  Committee records across Maharashtra.
+- Covered Districts: Nashik, Pune, Nagpur, Aurangabad, Kolhapur, Solapur, Sangli.
+- Key Commodities: Tomato, Onion, Potato, Grapes, Pomegranate, Sugarcane, 
+  Wheat, Rice, Soybean, Cotton.
+- Visual Charts: Interactive Recharts visualizations rendering 90-day price 
+  trajectories, modal prices, daily arrival quantities, and minimum/maximum 
+  trading ranges.
+- Farmer Benefit: Farmers can cross-reference current market price ceilings 
+  before listing their own produce to avoid under-pricing.
+
+4.5. Community Group-Buy Deals (Social Commerce)
+- How It Works: A farmer can launch a time-limited "Group-Buy Deal" for 
+  harvest surpluses (e.g. 500 kg of Nashik Tomatoes at Rs. 20/kg instead of Rs. 40/kg).
+- Threshold Quota: The deal defines a target quantity and expiration date.
+- Community Participation: Neighborhood buyers and housing societies join the 
+  deal, pledging quantities (e.g. 20 kg, 50 kg).
+- Deal Unlocking: When the collective quota is achieved before expiry, the deal 
+  locks as "Achieved", converting into confirmed discounted orders. If the quota 
+  is not met, participating buyers are refunded without penalty.
+
+4.6. Shopping Cart & Multi-Item Checkout
+- Cart Management: Powered by React `CartContext` with real-time backend 
+  synchronization. Buyers can update quantities and remove items.
+- Multi-Farmer Checkout: Supports adding produce from different farmers into 
+  a single consolidated cart. The backend splits sub-orders per farmer.
+- Saved Address Selector: Allows buyers to store multiple addresses (Home, Work, 
+  Apartment) and choose the active delivery destination.
+- Logistics Partner Simulation: Displays delivery partners (e.g., Krishi Express, 
+  Kisan Logistics, Maharashtra Agro Transport) with calculated delivery fees.
+
+4.7. Order Lifecycle, Logistics & Escrow Payments
+- Order States:
+  [ PENDING ] -> [ CONFIRMED ] -> [ PROCESSING ] -> [ PACKED ] -> [ SHIPPED ] -> [ DELIVERED ]
+       |
+       +---> [ CANCELLED ]
+- Payment Modes:
+  1. Cash on Delivery (COD) for convenience.
+  2. Online Payment via Razorpay Gateway (UPI, Credit/Debit cards, Netbanking).
+- Escrow Protection: For wholesale orders exceeding Rs. 5,000, funds are held 
+  in platform escrow upon payment and released to the farmer only once the 
+  buyer confirms satisfactory delivery, eliminating transaction fraud.
+
+4.8. Real-Time Chat & Messaging System
+- Direct Channel: Socket.io powered WebSocket connection directly between 
+  buyers and farmers.
+- No Middlemen: Buyers can negotiate custom bulk quantities, inquire about 
+  harvest freshness, and arrange transport directly.
+- Chat Persistence: Chat rooms and message histories are archived in MongoDB 
+  collections (`chatrooms` and `messages`) so conversations persist across sessions.
+
+4.9. Real-Time Push & Email Notification Engine
+- In-App Alerts: Instant notifications broadcasted via Socket.io when an order 
+  is placed, updated, cancelled, or when a chat message arrives.
+- Transactional Emails: HTML email templates dispatched via Nodemailer for:
+  * Welcome verification
+  * Order placement confirmation (with breakdown table)
+  * Farmer order arrival notification
+  * Password reset tokens
+
+4.10. Interactive Farm Map (Geo-Location)
+- Visual Farm Discovery: Built using React Leaflet and OpenStreetMap.
+- Map Markers: Pins farmers across Maharashtra districts showing their active 
+  farm locations, farm sizes, cultivated crops, and verification status.
+
+4.11. Admin Administration & Moderation Console
+- Platform Analytics: Global metrics displaying Total Gross Merchandise Value (GMV), 
+  active user counts, crop listing volumes, and completed order totals.
+- User Verification: Review farmer profiles, verify land documents, and toggle 
+  active/suspended account statuses.
+- Product Moderation: Approve new listings, highlight featured crops, or take 
+  down violating inventory.
+
+
+================================================================================
+5. COMPLETE DATABASE SCHEMA SPECIFICATIONS (MONGODB)
+================================================================================
+
+5.1. Collection: `users`
+--------------------------------------------------------------------------------
+Field              | Type      | Modifiers / Default      | Description
+-------------------+-----------+--------------------------+---------------------
+_id                | ObjectId  | auto                     | Primary Key
+fullName           | String    | required, trim           | User's full name
+email              | String    | required, unique, lower  | Email address
+phone              | String    | required                 | 10-digit phone
+password           | String    | required, select: false  | bcrypt hashed pwd
+userType           | String    | enum: buyer,farmer,admin | System role
+district           | String    | optional                 | District name
+taluka             | String    | optional                 | Sub-district (taluka)
+village            | String    | optional                 | Village name
+farmSize           | Number    | min: 0                   | Farm size in acres
+isVerified         | Boolean   | default: false           | KYC approval status
+isActive           | Boolean   | default: true            | Account ban status
+addresses          | Array     | embedded AddressSchema   | List of addresses
+  - label          | String    | enum: home,work,other    | Address tag
+  - fullName       | String    | required                 | Recipient name
+  - phone          | String    | required                 | Recipient contact
+  - addressLine1   | String    | required                 | Street / Building
+  - addressLine2   | String    | optional                 | Landmark
+  - district       | String    | required                 | District
+  - state          | String    | default: Maharashtra     | State
+  - pincode        | String    | required                 | 6-digit PIN code
+  - isDefault      | Boolean   | default: false           | Active default flag
+createdAt          | Date      | default: Date.now        | Registration stamp
+updatedAt          | Date      | default: Date.now        | Update stamp
+
+5.2. Collection: `products`
+--------------------------------------------------------------------------------
+Field              | Type      | Modifiers / Default      | Description
+-------------------+-----------+--------------------------+---------------------
+_id                | ObjectId  | auto                     | Primary Key
+farmer             | ObjectId  | ref: User, required      | Creator farmer ID
+cropName           | String    | required, trim, index    | Name of crop
+category           | String    | required, enum:          | Category
+                   |           | [vegetables, fruits,     |
+                   |           | grains, pulses, spices,  |
+                   |           | dairy, other]            |
+description        | String    | required, max: 2000      | Product description
+quantityAvailable  | Number    | required, min: 0         | Stock in units (kg)
+unit               | String    | default: 'kg'            | Metric unit
+pricePerKg         | Number    | required, min: 0         | Price per unit (Rs.)
+qualityGrade       | String    | enum: [A, B, C], def: A  | Quality grade
+harvestDate        | Date      | required                 | Harvest date
+expiryDate         | Date      | optional                 | Estimated expiry
+district           | String    | required, index          | Source district
+isOrganic          | Boolean   | default: false           | Organic flag
+certifications     | [String]  | default: []              | Organic cert IDs
+images             | Array     | embedded ImageSchema     | Product gallery
+  - url            | String    | required                 | Image URL / upload
+  - publicId       | String    | optional                 | Cloudinary ID
+tags               | [String]  | default: []              | Search tags
+deliveryOptions    | Object    | pickup, delivery, radius | Transport configs
+isAvailable        | Boolean   | default: true            | Active sale flag
+isApproved         | Boolean   | default: true            | Admin approval
+isFeatured         | Boolean   | default: false           | Hero highlight
+ratings            | Object    | average (0-5), count     | Aggregated reviews
+views              | Number    | default: 0               | Click count
+createdAt          | Date      | default: Date.now        | Timestamp
+
+5.3. Collection: `orders`
+--------------------------------------------------------------------------------
+Field              | Type      | Modifiers / Default      | Description
+-------------------+-----------+--------------------------+---------------------
+_id                | ObjectId  | auto                     | Primary Key
+orderNumber        | String    | unique, required         | Generated Order Code
+buyer              | ObjectId  | ref: User, required      | Purchasing buyer ID
+items              | Array     | embedded OrderItemSchema | Purchased produce
+  - product        | ObjectId  | ref: Product             | Product ID
+  - productSnapshot| Object    | cropName, pricePerKg,    | Immutable product
+                   |           | qualityGrade, category,  | snapshot at time
+                   |           | image                    | of purchase
+  - farmer         | ObjectId  | ref: User                | Fulfilling farmer ID
+  - quantity       | Number    | min: 1                   | Quantity ordered
+  - pricePerKg     | Number    | required                 | Locked unit price
+  - subtotal       | Number    | required                 | Item total (Rs.)
+pricing            | Object    | itemsTotal, deliveryFee, | Comprehensive
+                   |           | tax, discount, total     | financial breakdown
+deliveryAddress    | Object    | fullName, phone, lines   | Target destination
+payment            | Object    | method (cod, online),    | Payment state and
+                   |           | status, razorpay IDs     | transaction IDs
+escrow             | Object    | isEscrow (orders >5000), | Escrow security
+                   |           | status (held, released)  | protection state
+status             | String    | enum: pending, confirmed,| Current delivery
+                   |           | processing, packed,      | lifecycle stage
+                   |           | shipped, delivered,      |
+                   |           | cancelled                |
+timeline           | [Object]  | status, timestamp, note  | Audit event trail
+cancelledAt        | Date      | optional                 | Cancellation date
+cancelReason       | String    | optional                 | Reason for cancel
+createdAt          | Date      | default: Date.now        | Timestamp
+
+5.4. Collection: `groupbuys`
+--------------------------------------------------------------------------------
+Field              | Type      | Modifiers / Default      | Description
+-------------------+-----------+--------------------------+---------------------
+_id                | ObjectId  | auto                     | Primary Key
+product            | ObjectId  | ref: Product, required   | Target crop listing
+farmer             | ObjectId  | ref: User, required      | Offering farmer ID
+targetQuantity     | Number    | required, min: 10        | Total bulk quota
+discountPrice      | Number    | required                 | Discounted Rs./kg
+minParticipantQty  | Number    | default: 1               | Minimum buy quota
+currentQuantity    | Number    | default: 0               | Current total joined
+participants       | Array     | user, quantity, joinedAt | Joined buyer records
+status             | String    | enum: active, achieved,  | Bulk deal state
+                   |           | expired, cancelled       |
+expiryDate         | Date      | required                 | Expiration timestamp
+createdAt          | Date      | default: Date.now        | Timestamp
+
+5.5. Collection: `apmcprices`
+--------------------------------------------------------------------------------
+Field              | Type      | Modifiers / Default      | Description
+-------------------+-----------+--------------------------+---------------------
+_id                | ObjectId  | auto                     | Primary Key
+district           | String    | required, index          | Mandi district
+market             | String    | required                 | APMC market name
+commodity          | String    | required, index          | Crop name
+variety            | String    | default: 'Local'         | Botanical variety
+grade              | String    | default: 'FAQ'           | Fair Average Quality
+minPrice           | Number    | required                 | Min Rs./Quintal
+maxPrice           | Number    | required                 | Max Rs./Quintal
+modalPrice         | Number    | required                 | Benchmark modal rate
+arrivalQuantity    | Number    | required                 | Daily volume (Tons)
+date               | Date      | required, index          | Trading date record
+
+5.6. Collection: `chatrooms` & `messages`
+--------------------------------------------------------------------------------
+`chatrooms` fields:
+  - participants: [ObjectId ref: User] (Exact 2 members: Farmer + Buyer)
+  - lastMessage: String
+  - lastMessageAt: Date
+  - unreadCounts: Map<String, Number>
+`messages` fields:
+  - room: ObjectId ref: ChatRoom
+  - sender: ObjectId ref: User
+  - text: String
+  - read: Boolean (default: false)
+  - createdAt: Date
+
+5.7. Collection: `notifications`
+--------------------------------------------------------------------------------
+Field              | Type      | Modifiers / Default      | Description
+-------------------+-----------+--------------------------+---------------------
+_id                | ObjectId  | auto                     | Primary Key
+recipient          | ObjectId  | ref: User, required      | Target user ID
+type               | String    | order, deal, chat, system| Notification type
+title              | String    | required                 | Short alert title
+message            | String    | required                 | Body text
+link               | String    | optional                 | App URL to navigate
+isRead             | Boolean   | default: false           | Read toggle flag
+createdAt          | Date      | default: Date.now        | Timestamp
+
+
+================================================================================
+6. COMPLETE REST API ENDPOINT DIRECTORY
+================================================================================
+
+All REST endpoints reside under the base path `/api`.
+
+6.1. Authentication Routes (`/api/auth`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+POST   | /api/auth/register   | Public    | Register new Farmer, Buyer, or Admin
+POST   | /api/auth/login      | Public    | Login with email & password (JWT)
+GET    | /api/auth/me         | Protected | Get authenticated user profile
+POST   | /api/auth/logout     | Protected | Terminate session & clear cookies
+POST   | /api/auth/forgot-pwd | Public    | Generate password reset token email
+POST   | /api/auth/reset-pwd  | Public    | Reset password using secret token
+
+6.2. Product Catalog Routes (`/api/products`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+GET    | /api/products        | Public    | Filterable list (district, category)
+GET    | /api/products/search | Public    | Text search across crop names/tags
+GET    | /api/products/feature| Public    | Retrieve featured platform products
+GET    | /api/products/:id    | Public    | Get detailed product information
+POST   | /api/products        | Farmer    | Create new crop listing (Multer)
+PUT    | /api/products/:id    | Farmer    | Update crop details, stock, images
+DELETE | /api/products/:id    | Farmer    | Delete/delist product listing
+GET    | /api/products/farmer | Farmer    | Get all products for logged-in farmer
+
+6.3. Shopping Cart Routes (`/api/cart`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+GET    | /api/cart            | Buyer     | Retrieve current active cart
+POST   | /api/cart/add        | Buyer     | Add crop item with quantity
+PUT    | /api/cart/update     | Buyer     | Update quantity of existing cart item
+DELETE | /api/cart/item/:id   | Buyer     | Remove single item from cart
+DELETE | /api/cart/clear      | Buyer     | Empty entire shopping cart
+
+6.4. Order Management Routes (`/api/orders`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+POST   | /api/orders          | Buyer     | Create new order (COD / Online)
+GET    | /api/orders/my-orders| Buyer     | Retrieve buyer's order history
+GET    | /api/orders/farmer   | Farmer    | Retrieve farmer's received orders
+GET    | /api/orders/:id      | Protected | Get single order detail & audit trail
+PATCH  | /api/orders/:id/stat | Farmer    | Advance status (confirmed, shipped)
+POST   | /api/orders/:id/canc | Protected | Cancel order with audit explanation
+POST   | /api/orders/:id/escr | Buyer/Adm | Release escrow funds to farmer
+
+6.5. Payment Routes (`/api/payment`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+POST   | /api/payment/create  | Buyer     | Create Razorpay order instance
+POST   | /api/payment/verify  | Buyer     | Verify Razorpay cryptographic HMAC
+POST   | /api/payment/webhook | Public    | Handle asynchronous gateway webhooks
+
+6.6. APMC Mandi Price Routes (`/api/apmc`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+GET    | /api/apmc/today      | Public    | Get current day prices across mandis
+GET    | /api/apmc/history    | Public    | 90-day commodity price trend data
+GET    | /api/apmc/districts  | Public    | List supported APMC districts
+POST   | /api/apmc/import     | Admin     | Bulk import raw mandi market data
+
+6.7. Community Group-Buy Routes (`/api/group-buys`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+GET    | /api/group-buys      | Public    | List active community group deals
+GET    | /api/group-buys/:id  | Public    | Get single deal progress & quota
+POST   | /api/group-buys      | Farmer    | Launch new group-buy bulk discount
+POST   | /api/group-buys/:id/j| Buyer     | Join group deal with pledged quantity
+PATCH  | /api/group-buys/:id/c| Farmer    | Close or cancel deal before expiry
+
+6.8. User Profile & Address Routes (`/api/users`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+GET    | /api/users/profile   | Protected | Retrieve user profile & farm details
+PUT    | /api/users/profile   | Protected | Update name, phone, taluka, village
+POST   | /api/users/addresses | Buyer     | Add new delivery destination address
+PUT    | /api/users/addresses/| Buyer     | Edit existing address or set default
+DELETE | /api/users/addresses/| Buyer     | Delete saved address
+GET    | /api/users/farmer/:id| Public    | View public farmer profile & farm map
+
+6.9. Direct Chat & Real-Time Messaging (`/api/chat`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+GET    | /api/chat/rooms      | Protected | List conversation rooms for user
+GET    | /api/chat/rooms/:id  | Protected | Get message thread history in room
+POST   | /api/chat/start      | Protected | Initiate chat room between Buyer/Farmer
+POST   | /api/chat/message    | Protected | Send direct message and persist
+
+6.10. Notification Alerts (`/api/notifications`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+GET    | /api/notifications   | Protected | Fetch recent notifications (paginated)
+PATCH  | /api/notifications/:i| Protected | Mark notification as read
+DELETE | /api/notifications/:i| Protected | Remove notification record
+
+6.11. Admin Platform Management (`/api/admin`)
+--------------------------------------------------------------------------------
+METHOD | ENDPOINT             | ACCESS    | DESCRIPTION
+-------+----------------------+-----------+-------------------------------------
+GET    | /api/admin/dashboard | Admin     | Platform GMV, orders, user statistics
+GET    | /api/admin/users     | Admin     | Search & view all registered users
+PATCH  | /api/admin/users/:id | Admin     | Verify farmer KYC or toggle ban status
+GET    | /api/admin/products  | Admin     | Platform-wide inventory moderation
+PATCH  | /api/admin/products/ | Admin     | Approve or reject pending product
+
+
+================================================================================
+7. WEBSOCKET (SOCKET.IO) EVENT SPECIFICATIONS
+================================================================================
+The Socket.io server initializes on top of the Express HTTP server on port 5000.
+
+7.1. Connection & Room Scoping
+- Connection: Client connects sending auth handshake credentials.
+- Event: `join (userId)`
+  * Client emits its unique `userId`. The server creates/joins a dedicated socket 
+    room named `userId`. This ensures private notifications are delivered exclusively 
+    to the target user without leaking data to other connections.
+
+7.2. Chat Messaging Events
+- Event: `send-message`
+  * Payload: `{ recipientId, roomId, message, sender: { _id, fullName } }`
+  * Server emits `receive-message` to room `recipientId`.
+- Event: `typing`
+  * Payload: `{ roomId, senderId }`
+  * Broadcasts typing status indicator to the other participant.
+
+7.3. Push Notification Broadcasts
+- Event: `notification`
+  * Dispatched by `notificationService.send()` on backend business actions.
+  * Triggered on: Order created, order status updated, group deal locked, 
+    verification approved, new review posted.
+
+
+================================================================================
+8. FRONTEND STRUCTURE, COMPONENT HIERARCHY & STATE MANAGEMENT
+================================================================================
+
+8.1. Client Directory Layout
+client/src/
+  ├── components/
+  │   ├── layout/       -> MainLayout (Navbar+Footer), DashboardLayout (Farmer Sidebar), AdminLayout
+  │   ├── auth/         -> FarmerSignupForm, BuyerSignupForm
+  │   ├── landing/      -> Hero, Features, HowItWorks, Stats, FeaturedProducts
+  │   ├── product/      -> DigitalPassport (Crop traceability badges)
+  │   ├── shared/       -> PrivateRoute, Loading, ChronicleButton
+  │   └── ui/           -> Accessible shadcn/ui components (buttons, dialogs, drawers, cards, inputs)
+  ├── pages/
+  │   ├── public/       -> Home, Products (catalog), ProductDetail, CommunityDeals, MarketPrices
+  │   ├── auth/         -> Login, Register, ForgotPassword
+  │   ├── buyer/        -> Cart, Checkout, MyOrders, Profile, Settings, FarmMap
+  │   ├── farmer/       -> Dashboard, Products, AddProduct, EditProduct, Orders, Analytics, Deals, MarketPrices
+  │   ├── admin/        -> Dashboard, Users, Products, Orders, APMC, Settings
+  │   └── shared/       -> Notifications, Messages (Direct Chat)
+  ├── context/          -> AuthContext (user, login, logout), CartContext (cart, totals)
+  ├── services/         -> Axios API wrappers (auth.service, order.service, user.service)
+  ├── lib/              -> utils.js (getProductImageUrl, formatPrice, formatDate)
+  └── constants/        -> districts.json, locations.json
+
+8.2. React State Architecture
+- Server State: Managed with TanStack React Query v5. Queries for products, 
+  deals, APMC prices, and orders automatically invalidate and refetch on mutation.
+- Client Session State:
+  * `AuthContext`: Maintains active user profile, decoded JWT, and authentication status.
+  * `CartContext`: Maintains items array, total item counts, subtotal, and tax computations.
+
+
+================================================================================
+9. RESILIENCE, IMAGE FALLBACKS & MEDIA HANDLING
+================================================================================
+A core engineering achievement in this system is its Multi-Tier Fallback Engine 
+that completely eliminates broken image links (`404` errors):
+
+1. Primary: If a Cloudinary CDN image URL exists, it is loaded.
+2. Local Multer Uploads: If running offline or without Cloudinary keys, the 
+   backend automatically stores uploaded photos in `farmer/server/uploads/` 
+   and serves them through Express static middleware at `http://localhost:5000/uploads/...`.
+3. Crop & Category CDN Fallbacks: When a product has no image or an empty array, 
+   the client utility `getProductImageUrl(url, category)` analyzes the crop name 
+   or category and loads an authentic, curated produce photo:
+   - Tomato    -> High-res ripe tomato photo
+   - Onion     -> High-res sun-cured onion photo
+   - Mango     -> High-res Alphonso mango photo
+   - Grapes    -> High-res Thompson vineyard photo
+   - Spinach   -> High-res organic leafy green photo
+   - Potato    -> High-res fresh potato photo
+   - Chilli    -> High-res spicy green chilli photo
+   - Coconut   -> High-res tender coconut photo
+   - Cashew    -> High-res raw cashew nut photo
+   - Category Fallbacks -> Vegetables, Fruits, Grains, Pulses, Spices, Dairy.
+4. Terminal Fallback: All `<img />` tags across the frontend are equipped with 
+   `onError={(e) => { e.currentTarget.src = getProductImageUrl('', category) }}` 
+   falling back to a local vector SVG asset (`/placeholder.svg`) ensuring 
+   an image is always visible even under zero network connectivity.
+
+
+================================================================================
+10. ENVIRONMENT VARIABLES & CONFIGURATION DIRECTORY
+================================================================================
+
+10.1. Server Environment Configuration (`farmer/server/.env`)
+--------------------------------------------------------------------------------
+VARIABLE                | DEFAULT VALUE               | DESCRIPTION
+------------------------+-----------------------------+-------------------------
+PORT                    | 5000                        | Backend HTTP listen port
+NODE_ENV                | development                 | Environment flag
+MONGODB_URI             | mongodb://localhost:27017/  | MongoDB connection URI
+                        | farmer_marketplace         |
+JWT_SECRET              | your_super_secret_jwt_key   | JWT HMAC signing secret
+JWT_EXPIRE              | 7d                          | Token lifespan
+ALLOWED_ORIGINS         | http://localhost:5173,      | CORS origin whitelist
+                        | http://localhost:3000       |
+CLOUDINARY_CLOUD_NAME   | your_cloudinary_cloud_name  | Cloudinary account ID
+CLOUDINARY_API_KEY      | your_cloudinary_api_key     | Cloudinary API Key
+CLOUDINARY_API_SECRET   | your_cloudinary_api_secret  | Cloudinary API Secret
+RAZORPAY_KEY_ID         | your_razorpay_key_id        | Razorpay Public Key
+RAZORPAY_KEY_SECRET     | your_razorpay_key_secret    | Razorpay Secret Key
+EMAIL_HOST              | smtp.gmail.com              | SMTP Mail Server
+EMAIL_PORT              | 587                         | SMTP Port
+EMAIL_USER              | your_email@gmail.com        | SMTP Username
+EMAIL_PASS              | your_app_password           | SMTP App Password
+CLIENT_URL              | http://localhost:5173       | Frontend origin URL
+
+10.2. Client Environment Configuration (`farmer/client/.env`)
+--------------------------------------------------------------------------------
+VARIABLE                | DEFAULT VALUE               | DESCRIPTION
+------------------------+-----------------------------+-------------------------
+VITE_API_URL            | http://localhost:5000/api   | REST API base URL
+VITE_SOCKET_URL         | http://localhost:5000       | WebSocket server URL
+VITE_RAZORPAY_KEY_ID    | your_razorpay_key_id        | Client Razorpay Key ID
+
+
+================================================================================
+11. STEP-BY-STEP SETUP, SEEDING & EXECUTION GUIDE
+================================================================================
+
+11.1. Prerequisites
+- Node.js (Version 18.0.0 or higher recommended)
+- MongoDB Server running locally on port 27017 or a valid MongoDB Atlas connection string
+- npm package manager (comes bundled with Node.js)
+
+11.2. Backend Setup
+1. Open a terminal in the server folder:
+   cd "P:\College Work\TY\pdl\project\farmer\server"
+
+2. Install dependencies:
+   npm install
+
+3. Populate database with initial mock users, crops, and 90-day APMC prices:
+   npm run seed
+
+4. (Optional) If updating an existing database with high-resolution crop photos:
+   npm run update:images
+
+5. Start the backend development server:
+   npm run dev
+   Server will confirm:
+   "Server running in development mode on port 5000"
+   "Connected to MongoDB: mongodb://localhost:27017/farmer_marketplace"
+
+11.3. Frontend Setup
+1. Open a second terminal in the client folder:
+   cd "P:\College Work\TY\pdl\project\farmer\client"
+
+2. Install dependencies:
+   npm install
+
+3. Start the Vite development server:
+   npm run dev
+   Vite will output:
+   "VITE v5.4.21 ready in ... ms"
+   "Local: http://localhost:5173/"
+
+4. Open `http://localhost:5173` in any modern web browser.
+
+
+================================================================================
+12. DEMO CREDENTIALS & TEST SCENARIOS
+================================================================================
+
+The database seed script automatically prepares pre-configured demo accounts:
+
+ROLE     | EMAIL              | PASSWORD  | PROFILE DETAILS
+---------+--------------------+-----------+-------------------------------------
+Admin    | admin@demo.com     | admin123  | Platform Administrator
+Farmer 1 | farmer@demo.com    | demo123   | Ramesh Patil (Nashik, 5 Acres)
+Farmer 2 | farmer2@demo.com   | demo123   | Suresh More (Ratnagiri, 8 Acres)
+Farmer 3 | farmer3@demo.com   | demo123   | Ganesh Jadhav (Pune, 12 Acres)
+Buyer 1  | buyer@demo.com     | demo123   | Priya Sharma (Pune Buyer)
+Buyer 2  | buyer2@demo.com    | demo123   | Amit Deshmukh (Mumbai Buyer)
+
+Recommended End-to-End Walkthrough Scenarios:
+- Scenario 1 (Buyer Ordering):
+  Log in as `buyer@demo.com`. Browse Products. Filter by "Vegetables" or "Nashik". 
+  Inspect the Digital Product Passport. Add items to cart. Proceed to checkout. 
+  Select a saved delivery address. Choose "Cash on Delivery". Confirm purchase. 
+  Navigate to "My Orders" and track live delivery status.
+- Scenario 2 (Farmer Inventory & Orders):
+  Log in as `farmer@demo.com`. Go to Farmer Dashboard. Add a new crop listing 
+  with photo, price, and harvest date. Go to "Orders", inspect incoming purchase, 
+  and advance the status to "Packed" and "Shipped".
+- Scenario 3 (Community Group-Buy Deal):
+  As a farmer, create a Group-Buy Deal for surplus produce. As a buyer, navigate 
+  to "Community Deals", join the deal with pledged quantity, and watch the quota 
+  progress towards unlocking wholesale discounts.
+- Scenario 4 (Direct Chat):
+  As a buyer, open a product detail page and click "Chat with Farmer". Send 
+  a live message. Open another incognito browser as the farmer to experience 
+  instant bidirectional Socket.io communication.
+
+
+================================================================================
+13. COMPLETE PROJECT DIRECTORY TREE
+================================================================================
+
+farmer/
+├── client/                                    # Frontend React Application
+│   ├── public/
+│   │   ├── images/
+│   │   │   ├── auth/
+│   │   │   │   ├── buyer.png                 # Buyer registration role graphic
+│   │   │   │   └── farmer.png                # Farmer registration role graphic
+│   │   │   ├── placeholder-product.jpg       # Product image fallback asset
+│   │   │   └── profile-cover.png             # User profile banner graphic
+│   │   ├── placeholder.jpg                   # Root placeholder JPEG
+│   │   ├── placeholder.svg                   # Branded vector leaf placeholder
+│   │   └── vite.svg                          # Vite logo
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── auth/
+│   │   │   │   ├── BuyerSignupForm.jsx       # Multi-field buyer onboarding form
+│   │   │   │   └── FarmerSignupForm.jsx      # Agricultural KYC registration form
+│   │   │   ├── landing/
+│   │   │   │   ├── FeaturedProducts.jsx      # Top produce carousel/grid
+│   │   │   │   ├── Features.jsx              # Platform highlights section
+│   │   │   │   ├── Hero.jsx                  # Main visual hero section
+│   │   │   │   ├── HowItWorks.jsx            # Explanatory visual step walkthrough
+│   │   │   │   └── Stats.jsx                 # Platform metrics banner
+│   │   │   ├── layout/
+│   │   │   │   ├── AdminLayout.jsx           # Admin sidebar & header shell
+│   │   │   │   ├── DashboardLayout.jsx       # Farmer dashboard sidebar & shell
+│   │   │   │   ├── FlickeringFooter.jsx      # Modern animated dark footer
+│   │   │   │   ├── Footer.jsx                # Standard footer
+│   │   │   │   ├── MainLayout.jsx            # Public & Buyer layout wrapper
+│   │   │   │   └── Navbar.jsx                # Responsive navbar with cart count
+│   │   │   ├── product/
+│   │   │   │   └── DigitalPassport.jsx       # Crop origin & traceability modal
+│   │   │   ├── shared/
+│   │   │   │   ├── ChronicleButton.jsx       # Custom styled UI action button
+│   │   │   │   ├── Loading.jsx               # Branded loading spinner
+│   │   │   │   └── PrivateRoute.jsx          # Protected route RBAC gate
+│   │   │   └── ui/                           # Complete shadcn/ui component set
+│   │   ├── config/
+│   │   │   └── api.js                        # Axios instance with JWT interceptor
+│   │   ├── constants/
+│   │   │   ├── districts.js                  # Maharashtra districts dataset
+│   │   │   └── locations.js                  # APMC markets and regional data
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx               # Global user authentication context
+│   │   │   └── CartContext.jsx               # Shopping cart & pricing context
+│   │   ├── lib/
+│   │   │   └── utils.js                      # Image resolver, price/date formatters
+│   │   ├── pages/
+│   │   │   ├── admin/
+│   │   │   │   ├── APMC.jsx                  # Mandi dataset management
+│   │   │   │   ├── Dashboard.jsx             # Admin analytics metrics
+│   │   │   │   ├── Orders.jsx                # Platform order surveillance
+│   │   │   │   ├── Products.jsx              # Crop listing moderation
+│   │   │   │   ├── Settings.jsx              # Admin platform settings
+│   │   │   │   └── Users.jsx                 # User verification & ban controls
+│   │   │   ├── auth/
+│   │   │   │   ├── ForgotPassword.jsx        # Password reset email form
+│   │   │   │   ├── Login.jsx                 # Role-based login screen
+│   │   │   │   └── Register.jsx              # Role selection & registration
+│   │   │   ├── buyer/
+│   │   │   │   ├── Cart.jsx                  # Shopping cart management
+│   │   │   │   ├── Checkout.jsx              # Multi-step checkout & payment
+│   │   │   │   ├── FarmMap.jsx               # Leaflet interactive farm map
+│   │   │   │   ├── MyOrders.jsx              # Order status & tracking timeline
+│   │   │   │   ├── Profile.jsx               # Buyer profile & statistics
+│   │   │   │   └── Settings.jsx              # Saved delivery address manager
+│   │   │   ├── farmer/
+│   │   │   │   ├── AddProduct.jsx            # Create crop listing with uploads
+│   │   │   │   ├── Analytics.jsx             # Sales charts & earnings breakdown
+│   │   │   │   ├── Dashboard.jsx             # Farmer command center
+│   │   │   │   ├── Deals.jsx                 # Group-buy deal creation & status
+│   │   │   │   ├── EditProduct.jsx           # Inventory editor & photo manager
+│   │   │   │   ├── MarketPrices.jsx          # APMC mandi price comparison view
+│   │   │   │   ├── Orders.jsx                # Order fulfillment & status updater
+│   │   │   │   ├── Products.jsx              # Crop inventory catalog
+│   │   │   │   ├── Profile.jsx               # Farm profile & agricultural bio
+│   │   │   │   └── Settings.jsx              # Farm parameters & password manager
+│   │   │   ├── public/
+│   │   │   │   ├── CommunityDeals.jsx        # Social group-buy browse page
+│   │   │   │   ├── Home.jsx                  # Landing page
+│   │   │   │   ├── ProductDetail.jsx         # Full product page & passport
+│   │   │   │   └── Products.jsx              # Catalog search, filter & grid
+│   │   │   └── shared/
+│   │   │       ├── Messages.jsx              # Real-time WebSocket chat room
+│   │   │       └── Notifications.jsx         # User notification center
+│   │   ├── services/
+│   │   │   ├── auth.service.js               # Auth API requests
+│   │   │   ├── order.service.js              # Order placement API requests
+│   │   │   ├── payment.service.js            # Razorpay checkout interactions
+│   │   │   └── user.service.js               # Profile and address API requests
+│   │   ├── App.jsx                           # Route declarations & QueryClient
+│   │   ├── index.css                         # Tailwind CSS base styles & themes
+│   │   └── main.jsx                          # React application entry point
+│   ├── .env                                  # Client environment variables
+│   ├── .env.example                          # Sample client environment file
+│   ├── index.html                            # HTML entry point
+│   ├── package.json                          # Client dependencies & scripts
+│   ├── tailwind.config.js                    # Tailwind styling theme configurations
+│   └── vite.config.js                        # Vite bundler configurations
+│
+├── server/                                   # Backend Express Application
+│   ├── scripts/
+│   │   ├── seedData.js                       # Comprehensive database seed script
+│   │   ├── seedFarmers.js                    # Supplementary farmer generator
+│   │   └── updateProductImages.js            # Non-destructive crop image updater
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── axios.config.js               # Server HTTP client configuration
+│   │   │   ├── cloudinary.js                 # Cloudinary & local storage engine
+│   │   │   ├── db.js                         # Mongoose MongoDB connection handler
+│   │   │   └── razorpay.js                   # Razorpay payment gateway client
+│   │   ├── controllers/
+│   │   │   ├── admin.controller.js           # Admin oversight & analytics logic
+│   │   │   ├── apmc.controller.js            # Mandi rate querying & statistics
+│   │   │   ├── auth.controller.js            # Login, register & session logic
+│   │   │   ├── cart.controller.js            # Shopping cart operations
+│   │   │   ├── chat.controller.js            # Message threads & chatroom logic
+│   │   │   ├── groupBuy.controller.js        # Group-buying social deal logic
+│   │   │   ├── notification.controller.js    # Notification fetching & read flags
+│   │   │   ├── order.controller.js           # Order placement, escrow & status
+│   │   │   ├── payment.controller.js         # Razorpay signature verification
+│   │   │   ├── product.controller.js         # Crop CRUD, search & uploads
+│   │   │   └── user.controller.js            # Profile, address & stats logic
+│   │   ├── data/
+│   │   │   ├── crops.json                    # Maharashtra crops reference data
+│   │   │   └── districts.json                # Maharashtra district metadata
+│   │   ├── middleware/
+│   │   │   ├── auth.middleware.js            # JWT verification & RBAC authorization
+│   │   │   ├── error.middleware.js           # Centralized API error handler
+│   │   │   ├── upload.middleware.js          # Multer disk upload configuration
+│   │   │   └── validate.middleware.js        # Request input validation runner
+│   │   ├── models/
+│   │   │   ├── APMCPrice.js                  # Mandi daily price schema
+│   │   │   ├── ChatRoom.js                   # Two-party chat room schema
+│   │   │   ├── GroupBuy.js                   # Bulk discount deal schema
+│   │   │   ├── Message.js                    # Chat message record schema
+│   │   │   ├── Notification.js               # Push alert record schema
+│   │   │   ├── Order.js                      # Purchase order & escrow schema
+│   │   │   ├── Product.js                    # Crop inventory listing schema
+│   │   │   ├── Review.js                     # Customer review & rating schema
+│   │   │   └── User.js                       # User credentials & KYC schema
+│   │   ├── routes/
+│   │   │   ├── admin.routes.js               # Admin endpoints
+│   │   │   ├── apmc.routes.js                # APMC mandi price endpoints
+│   │   │   ├── auth.routes.js                # Authentication endpoints
+│   │   │   ├── cart.routes.js                # Cart management endpoints
+│   │   │   ├── chat.routes.js                # Messaging endpoints
+│   │   │   ├── groupBuy.routes.js            # Group-buy deal endpoints
+│   │   │   ├── notification.routes.js        # Notification endpoints
+│   │   │   ├── order.routes.js               # Order processing endpoints
+│   │   │   ├── payment.routes.js             # Payment gateway endpoints
+│   │   │   ├── product.routes.js             # Product catalog endpoints
+│   │   │   └── user.routes.js                # User & address endpoints
+│   │   ├── services/
+│   │   │   ├── email.service.js              # Nodemailer HTML template dispatcher
+│   │   │   ├── notification.service.js       # Socket.io notification manager
+│   │   │   ├── product.service.js            # Product utility functions
+│   │   │   └── sms.service.js                # Transactional SMS interface
+│   │   ├── utils/
+│   │   │   ├── apiError.js                   # Custom HTTP Error class
+│   │   │   ├── apiResponse.js                # Standardized JSON response helper
+│   │   │   ├── asyncHandler.js               # Async controller wrapper
+│   │   │   └── validators.js                 # Validation schemas
+│   │   └── app.js                            # Express app configuration & middleware
+│   ├── uploads/                              # Local static media storage directory
+│   ├── .env                                  # Server environment variables
+│   ├── .env.example                          # Sample server environment file
+│   ├── package.json                          # Server dependencies & scripts
+│   └── server.js                             # HTTP & Socket.io server entry point
+│
+├── README.md                                 # Primary repository README
+├── PROJECT_DETAILS.txt                       # Complete Project Documentation File
+└── UI_COMPONENTS_IMPROVEMENTS.md             # UI design improvements document
+================================================================================
+                          END OF PROJECT DOCUMENTATION
+================================================================================

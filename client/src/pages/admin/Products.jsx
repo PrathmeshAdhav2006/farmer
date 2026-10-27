@@ -67,7 +67,7 @@ const dummyProducts = [
     quantityAvailable: 500, qualityGrade: 'A', district: 'Nashik', isOrganic: true,
     isAvailable: true, isApproved: true, views: 234, isFeatured: false,
     farmer: { fullName: 'Ramesh Patil', _id: 'f1' },
-    images: [{ url: '/images/tomato.jpg' }],
+    images: [{ url: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop' }],
     ratings: { average: 4.5, count: 12 },
     createdAt: '2024-12-01',
   },
@@ -76,7 +76,7 @@ const dummyProducts = [
     quantityAvailable: 200, qualityGrade: 'A', district: 'Ratnagiri', isOrganic: false,
     isAvailable: true, isApproved: true, views: 567, isFeatured: true,
     farmer: { fullName: 'Suresh More', _id: 'f2' },
-    images: [{ url: '/images/mango.jpg' }],
+    images: [{ url: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=800&auto=format&fit=crop' }],
     ratings: { average: 4.8, count: 25 },
     createdAt: '2024-11-15',
   },
@@ -85,7 +85,7 @@ const dummyProducts = [
     quantityAvailable: 1000, qualityGrade: 'B', district: 'Nashik', isOrganic: false,
     isAvailable: true, isApproved: false, views: 89, isFeatured: false,
     farmer: { fullName: 'Ganesh Jadhav', _id: 'f3' },
-    images: [{ url: '/images/onion.jpg' }],
+    images: [{ url: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=800&auto=format&fit=crop' }],
     ratings: { average: 0, count: 0 },
     createdAt: '2024-12-10',
   },
@@ -94,7 +94,7 @@ const dummyProducts = [
     quantityAvailable: 50, qualityGrade: 'A', district: 'Sangli', isOrganic: true,
     isAvailable: false, isApproved: true, views: 145, isFeatured: false,
     farmer: { fullName: 'Vijay Shinde', _id: 'f4' },
-    images: [{ url: '/images/turmeric.jpg' }],
+    images: [{ url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop' }],
     ratings: { average: 4.2, count: 8 },
     createdAt: '2024-10-20',
   },
@@ -263,7 +263,8 @@ const AdminProducts = () => {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <img
-                          src={getProductImageUrl(product.images?.[0]?.url)}
+                          src={getProductImageUrl(product.images?.[0]?.url, product.category)}
+                          onError={(e) => { e.currentTarget.src = getProductImageUrl('', product.category) }}
                           alt={product.cropName}
                           className="w-10 h-10 rounded-lg object-cover"
                         />
@@ -391,7 +392,8 @@ const AdminProducts = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <img
-                  src={getProductImageUrl(selectedProduct.images?.[0]?.url)}
+                  src={getProductImageUrl(selectedProduct.images?.[0]?.url, selectedProduct.category)}
+                  onError={(e) => { e.currentTarget.src = getProductImageUrl('', selectedProduct.category) }}
                   alt={selectedProduct.cropName}
                   className="w-full h-48 object-cover rounded-lg"
                 />

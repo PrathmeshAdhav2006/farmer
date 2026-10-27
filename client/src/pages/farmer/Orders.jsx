@@ -49,7 +49,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import orderService from '@/services/order.service'
 import api from '@/config/api'
-import { formatPrice, formatDate, cn } from '@/lib/utils'
+import { formatPrice, formatDate, cn, getProductImageUrl } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const statusConfig = {
@@ -290,10 +290,8 @@ const FarmerOrders = () => {
                           {order.items?.slice(0, 2).map((item, idx) => (
                             <img
                               key={idx}
-                              src={
-                                item.productSnapshot?.image ||
-                                '/images/placeholder-product.jpg'
-                              }
+                              src={getProductImageUrl(item.productSnapshot?.image, item.productSnapshot?.category)}
+                              onError={(e) => { e.currentTarget.src = getProductImageUrl('', item.productSnapshot?.category) }}
                               alt={item.productSnapshot?.cropName}
                               className="w-8 h-8 rounded object-cover"
                             />
@@ -460,10 +458,8 @@ const FarmerOrders = () => {
                       >
                         <div className="flex items-center gap-3">
                           <img
-                            src={
-                              item.productSnapshot?.image ||
-                              '/images/placeholder-product.jpg'
-                            }
+                            src={getProductImageUrl(item.productSnapshot?.image, item.productSnapshot?.category)}
+                              onError={(e) => { e.currentTarget.src = getProductImageUrl('', item.productSnapshot?.category) }}
                             alt={item.productSnapshot?.cropName}
                             className="w-12 h-12 object-cover rounded"
                           />

@@ -1,34 +1,25 @@
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import React from 'react'
+import { motion } from 'framer-motion'
 import { 
   ShieldCheck, 
-  MapPin, 
   Leaf, 
   Zap, 
-  CircleDashed,
   CalendarDays,
   CheckCircle2,
   TreeDeciduous,
   BadgeCheck,
   TrendingUp,
   History,
-  Sparkles
+  CheckCircle,
 } from 'lucide-react'
 import { format } from 'date-fns'
 
 const DigitalPassport = ({ passport, product }) => {
-  const [isScanning, setIsScanning] = useState(true)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsScanning(false), 2000)
-    return () => clearTimeout(timer)
-  }, [])
-
   if (!passport) return null
 
-  // Map from new backend structure to timeline
+  // Map from backend structure to timeline
   const lifecycle = passport.traceability?.lifecycle || []
-  const timelineEvents = lifecycle.map((item, index) => {
+  const timelineEvents = lifecycle.map((item) => {
     const icons = {
       'Planted': <Leaf className="w-4 h-4" />,
       'Quality Inspection': <BadgeCheck className="w-4 h-4" />,
@@ -49,8 +40,9 @@ const DigitalPassport = ({ passport, product }) => {
     }
   })
 
-  const ai = passport.aiVerification || {}
+  const quality = passport.qualityVerification || passport.aiVerification || {}
   const eco = passport.ecoSustainability || {}
+  const freshnessScore = quality.freshnessScore || 95
 
   return (
     <div className="mt-12 space-y-6">
@@ -60,63 +52,38 @@ const DigitalPassport = ({ passport, product }) => {
           Digital Crop Passport
         </h2>
         <div className="px-3 py-1 bg-farmer-100 text-farmer-700 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-1">
-          <Sparkles className="w-3 h-3" />
-          Powered by Gemini AI
+          <CheckCircle className="w-3 h-3" />
+          Farm Traceability Verified
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left: AI Freshness Scan */}
+        {/* Left: Quality & Freshness Assessment */}
         <div className="md:col-span-1">
           <div className="relative h-full p-6 rounded-[2rem] bg-gradient-to-br from-zinc-50 to-zinc-100 border border-zinc-200 shadow-xl overflow-hidden flex flex-col items-center justify-center text-center">
-            <AnimatePresence mode="wait">
-              {isScanning ? (
-                <motion.div 
-                  key="scanning"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex flex-col items-center"
-                >
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="w-20 h-20 border-4 border-farmer-500 border-t-transparent rounded-full mb-4"
-                  />
-                  <p className="text-sm font-black text-zinc-500 uppercase tracking-tighter">AI Vision Scan...</p>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="verified"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="space-y-4 w-full"
-                >
-                  <div className="relative inline-block">
-                    <div className="w-24 h-24 bg-farmer-500 rounded-full flex items-center justify-center shadow-lg shadow-farmer-500/30">
-                      <span className="text-3xl font-black text-white">{ai.freshnessScore || 95}%</span>
-                    </div>
-                    <motion.div 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.5 }}
-                      className="absolute -bottom-2 -right-2 bg-white p-1 rounded-full shadow-md"
-                    >
-                      <CheckCircle2 className="w-8 h-8 text-green-500" />
-                    </motion.div>
-                  </div>
-                  <div>
-                    <h3 className="font-black text-foreground">AI Verified Health</h3>
-                    <p className="text-[11px] text-muted-foreground font-medium leading-tight px-2">
-                       {ai.imageAnalysis || `Gemini Vision confirms Grade ${product.qualityGrade} quality.`}
-                    </p>
-                    <div className="mt-2 text-[10px] font-bold text-farmer-600 bg-farmer-50 px-2 py-1 rounded-md inline-block">
-                      Confidence: {ai.gradeConfidence}%
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="space-y-4 w-full"
+            >
+              <div className="relative inline-block">
+                <div className="w-24 h-24 bg-farmer-500 rounded-full flex items-center justify-center shadow-lg shadow-farmer-500/30">
+                  <span className="text-3xl font-black text-white">{freshnessScore}%</span>
+                </div>
+                <div className="absolute -bottom-2 -right-2 bg-white p-1 rounded-full shadow-md">
+                  <CheckCircle2 className="w-8 h-8 text-green-500" />
+                </div>
+              </div>
+              <div>
+                <h3 className="font-black text-foreground">Farm Freshness Score</h3>
+                <p className="text-[11px] text-muted-foreground font-medium leading-tight px-2 mt-1">
+                  Inspected and verified for Grade {product?.qualityGrade || 'A'} quality standards.
+                </p>
+                <div className="mt-2 text-[10px] font-bold text-farmer-600 bg-farmer-50 px-2.5 py-1 rounded-md inline-block">
+                  Grade {product?.qualityGrade || 'A'} Produce
+                </div>
+              </div>
+            </motion.div>
             
             <div className="absolute -top-10 -right-10 w-32 h-32 bg-farmer-500/5 rounded-full blur-3xl" />
           </div>

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import api from '@/config/api'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getProductImageUrl } from '@/lib/utils'
 
 const FarmerDeals = () => {
   const [deals, setDeals] = useState([])
@@ -117,13 +117,12 @@ const FarmerDeals = () => {
             return (
               <Card key={deal._id} className="overflow-hidden border-border/50 hover:shadow-md transition-shadow">
                 <div className="relative h-40 bg-muted">
-                  {deal.product?.images?.[0]?.url ? (
-                    <img src={deal.product.images[0].url} alt={deal.product.cropName} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-muted">
-                      <Package className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                  )}
+                  <img
+                    src={getProductImageUrl(deal.product?.images?.[0]?.url, deal.product?.category)}
+                    onError={(e) => { e.currentTarget.src = getProductImageUrl('', deal.product?.category) }}
+                    alt={deal.product?.cropName}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute top-3 right-3">
                     <span className={`text-xs font-bold px-3 py-1 rounded-full text-white ${getStatusColor(deal.status)}`}>
                       {deal.status.toUpperCase()}

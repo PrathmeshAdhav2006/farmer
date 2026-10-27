@@ -1,5 +1,4 @@
 import express from 'express'
-import passport from 'passport'
 import User from '../models/User.js'
 import { protect } from '../middleware/auth.middleware.js'
 
@@ -31,7 +30,6 @@ router.post('/register', async (req, res) => {
       taluka,
       village,
       farmSize,
-      authProvider: 'local',
     })
 
     const token = user.getSignedJwtToken()
@@ -101,14 +99,6 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' })
     }
 
-    // Reject Google-only accounts from password login
-    if (user.authProvider === 'google' && !user.password) {
-      return res.status(400).json({
-        success: false,
-        message: 'This account uses Google sign-in. Please continue with Google.',
-      })
-    }
-
     // Enforce account status
     if (user.isBanned) {
       return res.status(403).json({ success: false, message: 'Your account has been suspended. Contact support.' })
@@ -158,44 +148,5 @@ router.post('/logout', (req, res) => {
   })
   res.status(200).json({ success: true, message: 'Logged out successfully' })
 })
-
-// ─── Google OAuth ─────────────────────────────────────────────────────────────
-
-// Step 1: Redirect user to Google
-router.get('/google', passport.authenticate('google', {
-  scope: ['profile', 'email'],
-  session: false,
-}))
-
-// Step 2: Google redirects back here with code
-router.get(
-  '/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: `${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=google_failed` }),
-  (req, res) => {
-    try {
-      console.log('🔄 Google authentication successful, preparing redirect...')
-      const user = req.user
-      const token = user.getSignedJwtToken()
-
-      // Strip sensitive fields
-      const userObj = user.toObject()
-      delete userObj.password
-      delete userObj.googleId
-
-      // Redirect to frontend with token and user encoded in query params
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000'
-      const params = new URLSearchParams({
-        token,
-        user: JSON.stringify(userObj),
-      })
-
-      res.redirect(`${clientUrl}/auth/callback?${params.toString()}`)
-    } catch (error) {
-      console.error('Google callback error:', error)
-      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000'
-      res.redirect(`${clientUrl}/login?error=auth_failed`)
-    }
-  }
-)
 
 export default router

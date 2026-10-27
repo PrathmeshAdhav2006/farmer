@@ -35,7 +35,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker'
 import { Label } from '@/components/ui/label'
 import api from '@/config/api'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getProductImageUrl } from '@/lib/utils'
 import Loading from '@/components/shared/Loading'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -358,7 +358,8 @@ const OrderCard = ({ order, onCancel, onReleaseEscrow, isReleasing }) => {
                       {order.items.map((item, index) => (
                         <div key={index} className="flex gap-4 p-3 rounded-2xl border border-zinc-100 bg-card shadow-sm hover:shadow-md transition-shadow">
                           <img
-                            src={item.product?.images?.[0]?.url || item.productSnapshot?.image || '/placeholder.jpg'}
+                            src={getProductImageUrl(item.product?.images?.[0]?.url || item.productSnapshot?.image, item.product?.category || item.productSnapshot?.category)}
+                            onError={(e) => { e.currentTarget.src = getProductImageUrl('', item.product?.category || item.productSnapshot?.category) }}
                             alt={item.product?.cropName || item.productSnapshot?.cropName}
                             className="w-20 h-20 object-cover rounded-xl"
                           />

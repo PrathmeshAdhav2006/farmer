@@ -39,7 +39,6 @@ const AdminSettings = () => (
       <CardContent className="space-y-4">
         {[
           { label: 'Require product approval', desc: 'Admin must approve products before listing', default: false },
-          { label: 'Enable AI predictions', desc: 'Show AI price predictions to farmers', default: true },
           { label: 'Enable COD payments', desc: 'Allow cash on delivery orders', default: true },
           { label: 'Maintenance mode', desc: 'Show maintenance page to all users', default: false },
         ].map((setting, i) => (

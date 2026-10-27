@@ -62,6 +62,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
         cropName: product.cropName,
         pricePerKg: product.pricePerKg,
         qualityGrade: product.qualityGrade,
+        category: product.category,
         image: product.images?.[0]?.url,
       },
       farmer: product.farmer._id,

@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { useCart } from '@/context/CartContext'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getProductImageUrl } from '@/lib/utils'
 import Loading from '@/components/shared/Loading'
 
 const Cart = () => {
@@ -196,7 +196,8 @@ const CartItem = ({ item, updating, onUpdateQuantity, onRemove }) => {
               onClick={() => navigate(`/products/${product._id}`)}
             >
               <img
-                src={product.images?.[0]?.url || '/placeholder.jpg'}
+                src={getProductImageUrl(product.images?.[0]?.url, product.category)}
+                onError={(e) => { e.currentTarget.src = getProductImageUrl('', product.category) }}
                 alt={product.cropName}
                 className="w-full h-full object-cover rounded-lg"
               />

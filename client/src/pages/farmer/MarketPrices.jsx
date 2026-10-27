@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  TrendingUp, TrendingDown, Search, MapPin, Calendar,
-  BarChart3, ArrowUpRight, ArrowDownRight, RefreshCw,
-  Brain, Sparkles, Info, ArrowRight,
+  TrendingUp, TrendingDown, Search, MapPin,
+  BarChart3, RefreshCw, Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,13 +11,11 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  LineChart, Line, AreaChart, Area, XAxis, YAxis,
+  AreaChart, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { useAuth } from '@/context/AuthContext'
-import { formatPrice, cn } from '@/lib/utils'
-import { toast } from 'sonner'
-import aiService from '@/services/ai.service'
+import { cn } from '@/lib/utils'
 
 const districts = [
   'Nashik', 'Pune', 'Nagpur', 'Aurangabad', 'Kolhapur',
@@ -62,9 +59,6 @@ const MarketPrices = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPrices, setCurrentPrices] = useState(generateCurrentPrices())
   const [priceHistory, setPriceHistory] = useState(generatePriceHistory(2500))
-  const [aiPrediction, setAiPrediction] = useState(null)
-  const [predicting, setPredicting] = useState(false)
-  const [combinedData, setCombinedData] = useState([])
 
   const filteredPrices = currentPrices.filter(p =>
     p.commodity.toLowerCase().includes(searchTerm.toLowerCase())
@@ -77,34 +71,6 @@ const MarketPrices = () => {
       Pomegranate: 7500, Sugarcane: 3000, Wheat: 2400, Soybean: 4800,
     }
     setPriceHistory(generatePriceHistory(basePrices[commodity] || 2000))
-    setAiPrediction(null)
-    setCombinedData([])
-  }
-
-  const handlePredictPrice = async () => {
-    setPredicting(true)
-    try {
-      const response = await aiService.predictPrice(selectedCommodity, selectedDistrict)
-      if (response.success) {
-        setAiPrediction(response.data)
-        
-        // Prepare combined data for the chart (historical + predicted)
-        const historical = priceHistory.map(d => ({ ...d, type: 'historical' }))
-        const predicted = response.data.priceSeries.map(p => ({
-          date: new Date(p.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
-          price: p.price,
-          type: 'predicted'
-        }))
-        
-        setCombinedData([...historical, ...predicted])
-        toast.success('AI Forecast generated successfully!')
-      }
-    } catch (error) {
-      console.error('Prediction error:', error)
-      toast.error('Failed to generate prediction. Please try again.')
-    } finally {
-      setPredicting(false)
-    }
   }
 
   return (
@@ -124,7 +90,7 @@ const MarketPrices = () => {
               Market <span className="text-transparent bg-clip-text bg-gradient-to-r from-farmer-400 to-green-300">Intelligence</span>
             </h1>
             <p className="text-zinc-400 text-lg font-medium leading-relaxed max-w-xl">
-              Real-time agricultural commodity prices, trends, and AI-powered market forecasts tailored to your district.
+              Real-time agricultural commodity prices and historical mandi market trends tailored to your district.
             </p>
           </div>
           
@@ -157,10 +123,6 @@ const MarketPrices = () => {
             <TabsTrigger value="trends" className="rounded-full px-6 transition-all duration-300">
               <TrendingUp className="w-4 h-4 mr-2" />
               Trends
-            </TabsTrigger>
-            <TabsTrigger value="predictions" className="rounded-full px-6 transition-all duration-300">
-              <Brain className="w-4 h-4 mr-2" />
-              AI Insights
             </TabsTrigger>
           </TabsList>
         </div>
@@ -283,7 +245,7 @@ const MarketPrices = () => {
                   <TrendingUp className="w-5 h-5 text-farmer-500" />
                   {selectedCommodity} Analysis
                 </CardTitle>
-                <CardDescription>Price fluctions over the last 30 days in {selectedDistrict}</CardDescription>
+                <CardDescription>Price fluctuations over the last 30 days in {selectedDistrict}</CardDescription>
               </div>
               <Select value={selectedCommodity} onValueChange={handleCommoditySelect}>
                 <SelectTrigger className="w-[180px] rounded-full border-border/50 bg-background/80 shadow-sm"><SelectValue /></SelectTrigger>
@@ -331,187 +293,6 @@ const MarketPrices = () => {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* AI Insights Content */}
-        <TabsContent value="predictions" className="space-y-8 max-w-5xl mx-auto">
-          <Card className="bg-gradient-to-br from-farmer-600/10 via-blue-500/10 to-transparent border-farmer-500/20 rounded-3xl overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-8 text-farmer-500/5 rotate-12 -mr-10 -mt-10">
-              <Brain className="w-64 h-64" />
-            </div>
-            
-            <CardContent className="p-8 relative z-10">
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                <div className="w-20 h-20 bg-gradient-to-br from-farmer-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-farmer-500/20">
-                  <Sparkles className="w-10 h-10 text-white" />
-                </div>
-                <div className="flex-1 text-center md:text-left">
-                  <Badge className="bg-farmer-500 text-white mb-2 uppercase text-[10px] tracking-widest px-3 py-1 border-none">Beta: AI Engine 2.0</Badge>
-                  <h3 className="text-2xl font-black text-foreground leading-none">Smart Price Prediction</h3>
-                  <p className="text-muted-foreground mt-2 text-sm font-medium">
-                    Our AI cross-references weather data with multi-market APMC trends to help you time your sales perfectly.
-                  </p>
-                  
-                  <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center md:justify-start">
-                    <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
-                      <SelectTrigger className="w-full sm:w-[200px] rounded-full border-border/50 bg-background/80 shadow-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {commodities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <Button variant="farmer" size="lg" className="rounded-full px-10 shadow-lg shadow-farmer-500/25" onClick={handlePredictPrice} disabled={predicting}>
-                      {predicting ? (
-                        <><RefreshCw className="w-5 h-5 mr-3 animate-spin" />Analyzing Trends...</>
-                      ) : (
-                        <><Brain className="w-5 h-5 mr-3" />Generate Forecast</>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {aiPrediction && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {aiPrediction.predictions.map((pred, i) => {
-                  const isUp = pred.price > aiPrediction.currentPrice
-                  const changePercent = ((pred.price - aiPrediction.currentPrice) / aiPrediction.currentPrice * 100).toFixed(1)
-                  return (
-                    <motion.div
-                      key={pred.days}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                    >
-                      <Card className="rounded-3xl border-border/40 hover:border-farmer-500/50 transition-all hover:bg-accent/5 overflow-hidden group">
-                        <div className={cn("h-1.5 w-full", isUp ? "bg-green-500" : "bg-red-500")} />
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Next {pred.days} Days</span>
-                            <Badge variant="outline" className="rounded-full bg-muted/30 border-none text-[10px]">{pred.confidence}% Acc</Badge>
-                          </div>
-                          <div className="mb-4">
-                            <p className="text-3xl font-black text-foreground">₹{pred.price.toLocaleString()}</p>
-                            <p className="text-xs font-medium text-muted-foreground mt-1">Predicted Modal Price</p>
-                          </div>
-                          <div className={cn(
-                            'inline-flex items-center gap-1.5 text-sm font-black px-3 py-1 rounded-full',
-                            isUp ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'
-                          )}>
-                            {isUp ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                            {isUp ? 'UP' : 'DOWN'} {Math.abs(changePercent)}%
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  )
-                })}
-              </div>
-
-              <Card className={cn(
-                'rounded-3xl border-none shadow-2xl relative overflow-hidden',
-                aiPrediction.recommendation.startsWith('HOLD') ? 'bg-farmer-600 text-white' : 'bg-orange-600 text-white'
-              )}>
-                <div className="absolute top-0 right-0 p-10 opacity-10 rotate-12">
-                  <Brain className="w-40 h-40" />
-                </div>
-                <CardContent className="p-8 relative z-10">
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                    <div className="w-16 h-16 bg-card/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                      <Info className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-lg font-bold uppercase tracking-widest opacity-80 flex items-center gap-2">
-                        AI Recommendation <ArrowRight className="w-4 h-4" />
-                      </h4>
-                      <p className="text-2xl md:text-3xl font-black mt-2 leading-tight">{aiPrediction.recommendation}</p>
-                      
-                      <div className="mt-8">
-                        <p className="text-xs font-bold uppercase tracking-widest opacity-60 mb-4">Primary Factors Analyzed:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {aiPrediction.factors.map((factor, i) => (
-                            <Badge key={i} className="bg-black/20 text-white border-white/20 px-3 py-1 rounded-full font-medium">{factor}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {combinedData.length > 0 && (
-                <Card className="rounded-3xl border-border/50 overflow-hidden shadow-lg bg-background/50 backdrop-blur-sm">
-                  <CardHeader className="border-b border-border/30 bg-muted/10 p-6">
-                    <CardTitle className="text-xl font-bold flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5 text-farmer-500" />
-                      30-Day Price Forecast: {selectedCommodity}
-                    </CardTitle>
-                    <CardDescription>Continuous trend line combining historical data and AI predictions</CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-6 md:p-8">
-                    <div className="h-[400px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={combinedData}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground))" opacity={0.1} />
-                          <XAxis 
-                            dataKey="date" 
-                            tick={{ fontSize: 10, fontWeight: 500 }} 
-                            axisLine={false}
-                            tickLine={false}
-                            interval={5}
-                          />
-                          <YAxis 
-                            tick={{ fontSize: 11, fontWeight: 500 }} 
-                            tickFormatter={v => `₹${v}`}
-                            axisLine={false}
-                            tickLine={false}
-                            domain={['auto', 'auto']}
-                          />
-                          <Tooltip 
-                            contentStyle={{ backgroundColor: 'hsl(var(--background))', borderRadius: '16px', border: '1px solid hsl(var(--border))', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                            formatter={(v, n, p) => [
-                              `₹${v}/quintal`, 
-                              p.payload.type === 'historical' ? 'Historical Price' : 'Predicted Price'
-                            ]} 
-                          />
-                          <Legend />
-                          <Line 
-                            type="monotone" 
-                            dataKey="price" 
-                            stroke="#22c55e" 
-                            strokeWidth={3} 
-                            dot={(props) => {
-                              const { payload } = props;
-                              return payload.type === 'predicted' ? <circle cx={props.cx} cy={props.cy} r={3} fill="#3b82f6" stroke="none" /> : null;
-                            }}
-                            activeDot={{ r: 6 }}
-                            strokeDasharray={(props) => props.payload?.type === 'predicted' ? "5 5" : "0"}
-                            name="Price Trend"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-4 justify-center">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-0.5 bg-green-500" />
-                        <span className="text-xs font-medium text-muted-foreground">Historical Data</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-0.5 bg-blue-500 border-t border-dashed" />
-                        <span className="text-xs font-medium text-muted-foreground">AI Prediction (30 Days)</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </motion.div>
-          )}
         </TabsContent>
       </Tabs>
     </div>

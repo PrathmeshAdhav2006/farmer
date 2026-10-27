@@ -25,19 +25,9 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
+    required: [true, 'Please add a password'],
     minlength: 6,
     select: false,
-  },
-  // OAuth fields
-  googleId: {
-    type: String,
-    sparse: true, // allows null but enforces uniqueness when set
-    index: true,
-  },
-  authProvider: {
-    type: String,
-    enum: ['local', 'google'],
-    default: 'local',
   },
   userType: {
     type: String,
@@ -78,7 +68,7 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ userType: 1 })
 userSchema.index({ district: 1 })
 
-// Hash password before saving (skip for Google OAuth users)
+// Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) return next()
   this.password = await bcrypt.hash(this.password, 12)
@@ -87,17 +77,15 @@ userSchema.pre('save', async function (next) {
 
 // Sign JWT
 userSchema.methods.getSignedJwtToken = function () {
-  if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET environment variable is not set')
-  }
+  const secret = process.env.JWT_SECRET || 'farmer_marketplace_jwt_secret_dev_key_12345'
   return jwt.sign(
     { id: this._id, userType: this.userType },
-    process.env.JWT_SECRET,
+    secret,
     { expiresIn: process.env.JWT_EXPIRE || '7d' }
   )
 }
 
-// Match password (not applicable for Google auth)
+// Match password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   if (!this.password) return false
   return await bcrypt.compare(enteredPassword, this.password)

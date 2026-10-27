@@ -184,7 +184,7 @@ const ProductDetail = () => {
     )
   }
 
-  const images = product.images || []
+  const images = (product.images && product.images.length > 0) ? product.images : [{ url: getProductImageUrl('', product.category) }]
   const maxQuantity = Math.min(product.quantityAvailable || 0, 1000)
   const totalPrice = (product.pricePerKg || 0) * quantity
 
@@ -209,7 +209,8 @@ const ProductDetail = () => {
               <div className="relative aspect-square">
                 {images.length > 0 ? (
                   <img
-                    src={getProductImageUrl(images[currentImageIndex]?.url)}
+                    src={getProductImageUrl(images[currentImageIndex]?.url, product.category)}
+                    onError={(e) => { e.currentTarget.src = getProductImageUrl('', product.category) }}
                     alt={product.cropName}
                     className="w-full h-full object-cover"
                   />
@@ -272,7 +273,8 @@ const ProductDetail = () => {
                       }`}
                   >
                     <img
-                      src={getProductImageUrl(image.url)}
+                      src={getProductImageUrl(image.url, product.category)}
+                      onError={(e) => { e.currentTarget.src = getProductImageUrl('', product.category) }}
                       alt={`${product.cropName} ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -514,7 +516,8 @@ const ProductDetail = () => {
                   onClick={() => navigate(`/products/${p._id}`)}
                 >
                   <img
-                    src={getProductImageUrl(p.images?.[0]?.url)}
+                    src={getProductImageUrl(p.images?.[0]?.url, p.category)}
+                    onError={(e) => { e.currentTarget.src = getProductImageUrl('', p.category) }}
                     alt={p.cropName}
                     className="w-full h-48 object-cover rounded-t-lg"
                   />

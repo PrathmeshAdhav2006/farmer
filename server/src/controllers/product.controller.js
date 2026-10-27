@@ -148,11 +148,11 @@ export const getProductById = asyncHandler(async (req, res, next) => {
       ],
       currentLocation: product.district,
     },
-    aiVerification: {
+        qualityVerification: {
       freshnessScore,
-      gradeConfidence: 99.4,
-      imageAnalysis: 'Verified - High Quality Produce',
-      verifiedAt: product.createdAt,
+      grade: product.qualityGrade,
+      inspectionSummary: 'Verified - High Quality Farm Produce',
+      inspectedAt: product.createdAt,
     },
     ecoSustainability: {
       co2Saved: `${co2Saved} kg`,
@@ -199,12 +199,6 @@ export const createProduct = asyncHandler(async (req, res, next) => {
         }
       })
       uploadedImages = await Promise.all(uploadPromises)
-    } else {
-      // Default placeholder image
-      uploadedImages = [{
-        url: 'https://placehold.co/400x400?text=Product+Image',
-        publicId: null,
-      }]
     }
 
     // Parse JSON fields safely
@@ -308,8 +302,32 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
     return next(new ApiError('Not authorized to update this product', 403))
   }
 
-  // Handle new images
-  let uploadedImages = product.images
+  // Handle existing images and new images
+  let existingImages = product.images || []
+  if (req.body.existingImages !== undefined) {
+    try {
+      existingImages = typeof req.body.existingImages === 'string'
+        ? JSON.parse(req.body.existingImages)
+        : req.body.existingImages
+      if (!Array.isArray(existingImages)) {
+        existingImages = []
+      }
+    } catch (e) {
+      existingImages = product.images || []
+    }
+  }
+
+  // Delete removed images from Cloudinary if needed
+  if (product.images && product.images.length > 0) {
+    const keptPublicIds = new Set(existingImages.map(img => img.publicId).filter(Boolean))
+    product.images.forEach(img => {
+      if (img.publicId && !keptPublicIds.has(img.publicId)) {
+        deleteFromCloudinary(img.publicId).catch(console.error)
+      }
+    })
+  }
+
+  let uploadedImages = [...existingImages]
 
   if (req.files && req.files.length > 0) {
     const uploadPromises = req.files.map(async (file) => {
@@ -320,17 +338,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
       }
     })
     const newImages = await Promise.all(uploadPromises)
-    
-    // Delete old images from Cloudinary
-    if (product.images && product.images.length > 0) {
-      product.images.forEach(img => {
-        if (img.publicId && !img.url.includes('placehold.co')) {
-          deleteFromCloudinary(img.publicId).catch(console.error)
-        }
-      })
-    }
-    
-    uploadedImages = newImages
+    uploadedImages = [...uploadedImages, ...newImages]
   }
 
   // Parse JSON fields

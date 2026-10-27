@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import api from '@/config/api'
 import { toast } from 'sonner'
 import Loading from '@/components/shared/Loading'
+import { getProductImageUrl } from '@/lib/utils'
 
 const EditProduct = () => {
   const navigate = useNavigate()
@@ -444,7 +445,8 @@ const EditProduct = () => {
                   {existingImages.map((img, idx) => (
                     <div key={idx} className="relative group">
                       <img
-                        src={img.url}
+                        src={getProductImageUrl(img.url, formData.category)}
+                        onError={(e) => { e.currentTarget.src = getProductImageUrl('', formData.category) }}
                         alt={`Image ${idx + 1}`}
                         className="w-full h-32 object-cover rounded-lg border border-border"
                       />

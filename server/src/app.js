@@ -7,8 +7,6 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import rateLimit from 'express-rate-limit'
 import mongoSanitize from 'express-mongo-sanitize'
-import passport from 'passport'
-import './config/passport.js'
 
 // Routes
 import authRoutes from './routes/auth.routes.js'
@@ -18,7 +16,6 @@ import orderRoutes from './routes/order.routes.js'
 import userRoutes from './routes/user.routes.js'
 import paymentRoutes from './routes/payment.routes.js'
 import apmcRoutes from './routes/apmc.routes.js'
-import aiRoutes from './routes/ai.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 import groupBuyRoutes from './routes/groupBuy.routes.js'
@@ -74,9 +71,6 @@ app.use(cookieParser())
 // MongoDB query sanitization — prevents NoSQL injection
 app.use(mongoSanitize())
 
-// Passport (Google OAuth)
-app.use(passport.initialize())
-
 // Logging — dev only
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'))
@@ -93,7 +87,6 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/payment', paymentRoutes)
 app.use('/api/apmc', apmcRoutes)
-app.use('/api/ai', aiRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/group-buys', groupBuyRoutes)

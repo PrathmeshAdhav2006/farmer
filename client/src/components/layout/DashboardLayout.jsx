@@ -20,7 +20,6 @@ import {
   ChevronDown,
   Leaf,
   Plus,
-  Sparkles,
   Users,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -35,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn, getInitials } from '@/lib/utils'
-import OnboardingWizard from '@/components/shared/OnboardingWizard'
 
 const sidebarLinks = [
   {
@@ -57,11 +55,6 @@ const sidebarLinks = [
     name: 'Analytics',
     href: '/farmer/analytics',
     icon: BarChart3,
-  },
-  {
-    name: 'Price Advisor',
-    href: '/farmer/advisor',
-    icon: Sparkles,
   },
   {
     name: 'Group Deals',
@@ -394,8 +387,7 @@ const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
-      <OnboardingWizard />
-    </div>
+        </div>
   )
 }
 
