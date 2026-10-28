@@ -7,6 +7,7 @@ import User from '../src/models/User.js'
 import Product from '../src/models/Product.js'
 import APMCPrice from '../src/models/APMCPrice.js'
 
+// Load environment variables from .env file
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/farmer_marketplace'
 
 const seedUsers = async () => {
